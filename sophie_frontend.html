@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sophie AI Chat</title>
+
+  <style>
+    body, html {
+      height: 100%;
+      margin: 0;
+      font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #f8f9fa;
+      color: #202124;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chat-container {
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      max-width: 800px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 0 20px;
+      box-sizing: border-box;
+      overflow-y: auto;
+    }
+
+    /* --- Header Section --- */
+    .greeting-header {
+      text-align: center;
+      margin-top: 40px;
+      margin-bottom: 30px;
+    }
+
+    .logo {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 10px;
+    }
+
+    .app-title {
+      font-size: 30px;
+      font-weight: 600;
+      background: linear-gradient(90deg, #2db2ff, #b76df2);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin: 0;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: #666;
+      margin: 0 0 20px;
+    }
+
+    .greeting {
+      font-size: 32px;
+      font-weight: 500;
+      color: #202124;
+      margin: 10px 0 5px;
+    }
+
+    .assist {
+      font-size: 18px;
+      color: #555;
+      margin-top: 5px;
+    }
+
+    .datetime {
+      font-size: 14px;
+      color: #888;
+      margin-top: 8px;
+    }
+
+    /* --- Chat Messages --- */
+    #chat-history {
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .message {
+      max-width: 80%;
+      padding: 12px 18px;
+      border-radius: 20px;
+      line-height: 1.5;
+    }
+
+    .user-message {
+      background-color: #e8eaed;
+      color: #202124;
+      align-self: flex-end;
+      border-bottom-right-radius: 5px;
+    }
+
+    .bot-message {
+      background-color: #ffffff;
+      color: #202124;
+      align-self: flex-start;
+      border-bottom-left-radius: 5px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+      white-space: pre-wrap;
+    }
+
+    .bot-message.loading {
+      color: #5f6368;
+      font-style: italic;
+    }
+
+    .error-message {
+      background-color: #fce8e6;
+      color: #c5221f;
+      align-self: flex-start;
+    }
+
+    /* --- Input Area --- */
+    .input-container {
+      position: sticky;
+      bottom: 0;
+      background-color: #f8f9fa;
+      padding: 20px 0;
+    }
+
+    .message-input-area {
+      width: 100%;
+      max-width: 800px;
+      margin: 0 auto;
+      background-color: #ffffff;
+      border-radius: 28px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      padding: 14px 20px;
+      box-sizing: border-box;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .icon-btn {
+      background: none;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      width: 24px;
+      height: 24px;
+      color: #5f6368;
+      flex-shrink: 0;
+    }
+
+    #message-input {
+      flex-grow: 1;
+      border: none;
+      outline: none;
+      font-size: 16px;
+      background: none;
+      color: #202124;
+    }
+
+    #send-btn {
+      background-color: #202124;
+      color: #ffffff;
+      border-radius: 50%;
+      width: 32px;
+      height: 32px;
+      padding: 7px;
+      transition: background-color 0.2s;
+    }
+
+    #send-btn:hover { background-color: #3c4043; }
+    #send-btn:disabled { background-color: #bdc1c6; cursor: not-allowed; }
+
+    .send-icon-svg { transform: rotate(90deg) translateX(1px); }
+
+    .logo {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+
+.sophie-logo {
+  width: 160px;       /* adjust size as needed */
+  height: auto;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  animation: fadeIn 1.5s ease-in-out;
+}
+
+/* Optional soft fade animation */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+/* --- Footer Styling --- */
+.footer {
+    text-align: center;
+    font-size: 14px;
+    color: #5f6368;
+    background-color: #f1f3f4;
+    padding: 15px 10px;
+    border-top: 1px solid #dadce0;
+    margin-top: 10px;
+}
+
+.footer p {
+    margin: 5px 0;
+}
+
+.footer strong {
+    color: #202124;
+}
+
+.footer .disclaimer {
+    font-style: italic;
+    color: #757575;
+}
+
+.footer .testing-mode {
+    color: #c5221f;
+    font-weight: 500;
+}
+
+  </style>
+</head>
+
+<body>
+  <div class="chat-container" id="chat-history">
+    <!-- Greeting Header -->
+    <div class="greeting-header">
+      <div class="logo">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+          <path d="M50 10C27 10 10 27 10 50c0 7 2 13 5 18l-3 15 15-3c5 3 11 5 18 5 23 0 40-17 40-40S73 10 50 10z"
+                fill="url(#grad1)" />
+          <!-- <g stroke="url(#grad2)" stroke-width="2" stroke-linecap="round"> -->
+            <!-- <circle cx="50" cy="50" r="5" fill="none"/> -->
+            <!-- <line x1="50" y1="15" x2="50" y2="45"/> -->
+            <!-- <line x1="85" y1="50" x2="55" y2="50"/> -->
+            <!-- <line x1="15" y1="50" x2="45" y2="50"/> -->
+            <!-- <line x1="65" y1="35" x2="80" y2="20"/> -->
+            <!-- <line x1="35" y1="35" x2="20" y2="20"/> -->
+            <!-- <line x1="35" y1="65" x2="20" y2="80"/> -->
+            <!-- <line x1="65" y1="65" x2="80" y2="80"/> -->
+          <!-- </g> -->
+          <defs>
+            <linearGradient id="grad1" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#2db2ff" />
+              <stop offset="100%" stop-color="#b76df2" />
+            </linearGradient>
+            <linearGradient id="grad2" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#2db2ff" />
+              <stop offset="100%" stop-color="#b76df2" />
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+      <h1 class="app-title">Sophie</h1>
+      <p class="subtitle">The Wisdom of Knowledge</p>
+      <h2 class="greeting" id="greeting"></h2>
+      <p class="assist">How can I assist you?</p>
+      <p class="datetime" id="datetime"></p>
+    </div>
+  </div>
+
+  <div class="input-container">
+    <div class="message-input-area">
+      <button class="icon-btn" aria-label="Use microphone">
+        🎤
+      </button>
+      <input type="text" id="message-input" placeholder="Type a message">
+      <button class="icon-btn" id="send-btn" aria-label="Send message">
+        <svg class="send-icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="22" y1="12" x2="2" y2="12"></line>
+          <polyline points="16 6 22 12 16 18"></polyline>
+        </svg>
+      </button>
+    </div>
+  </div>
+    <!-- Footer -->
+  <!-- Footer -->
+<footer class="footer">
+  <div class="footer-content">
+    <div class="footer-brand">
+      <span class="sophie-name">Sophie</span> <span class="slogan">— The Wisdom of Knowledge</span>
+    </div>
+    <p class="footer-line">
+      💡 Developed with ❤️ by <strong>NLR Group of Company</strong>
+    </p>
+    <p class="footer-disclaimer">
+      ⚠️ Sophie may occasionally make mistakes — please verify important info twice.
+    </p>
+    <p class="footer-testing">
+      🧪 Currently in <span class="testing-highlight">Testing Mode</span>
+    </p>
+  </div>
+</footer>
+
+
+  <script>
+    // --- Dynamic Greeting + Time ---
+    function updateGreetingAndTime() {
+      const greetingEl = document.getElementById('greeting');
+      const datetimeEl = document.getElementById('datetime');
+
+      const now = new Date();
+      const hour = now.getHours();
+      let greeting = '';
+
+      if (hour < 12) greeting = 'Good Morning';
+      else if (hour < 17) greeting = 'Good Afternoon';
+      else if (hour < 20) greeting = 'Good Evening';
+      else greeting = 'Good Night';
+
+      const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      const dayName = days[now.getDay()];
+      const dateString = now.toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' });
+      const timeString = now.toLocaleTimeString('en-IN');
+
+      greetingEl.textContent = greeting;
+      datetimeEl.textContent = `${dayName}, ${dateString} | ${timeString}`;
+    }
+
+    setInterval(updateGreetingAndTime, 1000);
+    updateGreetingAndTime();
+
+    // --- Chat logic stays same ---
+    const BACKEND_URL = 'http://localhost:5000/chat';
+    const chatHistory = document.getElementById('chat-history');
+    const messageInput = document.getElementById('message-input');
+    const sendButton = document.getElementById('send-btn');
+
+    sendButton.addEventListener('click', handleSendMessage);
+    messageInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
+        handleSendMessage();
+      }
+    });
+
+    async function handleSendMessage() {
+      const messageText = messageInput.value.trim();
+      if (!messageText) return;
+
+      appendMessage('user', messageText);
+      messageInput.value = '';
+      messageInput.disabled = true;
+      sendButton.disabled = true;
+
+      const loadingElement = appendMessage('bot loading', 'Sophie is thinking...');
+
+      try {
+        const response = await fetch(BACKEND_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: messageText })
+        });
+
+        const data = await response.json();
+        if (data.success && data.response) {
+          loadingElement.textContent = data.response;
+          loadingElement.classList.remove('loading');
+        } else {
+          throw new Error(data.error || 'Invalid response');
+        }
+      } catch (error) {
+        loadingElement.textContent = 'Error: Unable to connect to Sophie.';
+        loadingElement.classList.add('error-message');
+      } finally {
+        messageInput.disabled = false;
+        sendButton.disabled = false;
+        chatHistory.scrollTop = chatHistory.scrollHeight;
+      }
+    }
+
+    function appendMessage(role, text) {
+      const messageElement = document.createElement('div');
+      messageElement.classList.add('message');
+
+      if (role === 'bot loading') {
+        messageElement.classList.add('bot-message', 'loading');
+      } else if (role === 'user') {
+        messageElement.classList.add('user-message');
+      } else {
+        messageElement.classList.add('bot-message');
+      }
+
+      messageElement.textContent = text;
+      chatHistory.appendChild(messageElement);
+      chatHistory.scrollTop = chatHistory.scrollHeight;
+      return messageElement;
+    }
+  </script>
+</body>
+</html>
